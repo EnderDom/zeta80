@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 /*
 * bits = Number of characters to write
@@ -38,4 +39,27 @@ char* getHexFromInt(int i, int bits, char *arr){
 		bits--;
 	}
 	return arr;
+}
+
+/*
+* In order to debug an annoying bug:
+* From: http://stackoverflow.com/questions/4497680/c-strcmp-source-code
+*/
+int strcmp2(const char *s1, const char *s2){
+  int ret = 0;
+  int i=0;
+
+  while (!(ret = *(unsigned char *) s1 - *(unsigned char *) s2) && *s2){
+	++s1, ++s2;
+	//printf("%d\n", i);
+	i++;
+   }
+  if (ret < 0)
+
+    ret = -1;
+  else if (ret > 0)
+
+    ret = 1 ;
+
+  return ret;
 }

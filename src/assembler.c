@@ -2,257 +2,76 @@
 #include <string.h>
 #include "assembler.h"
 #include "memory.h"
+#include "cpu.h"
 #include "zetaTools.h"
 
 int parseCommand(char* com, int x, int v){
-	verbosity = v;
-	int i = 0;
-	
-	int open =0;
-	
-	int comm_c = 0;
-	int dest_c = 0;
-	int src_c = 0;
-	char comm[10];
-	char dest[10];
-	char src[10];
-	int y;
-	for(y =0; y < 10; y++){
-		comm[y] = ' ';
-		dest[y] = ' ';
-		src[y] = ' ';
-	}
-	char *comm_p = &comm[0];
-	char *dest_p = &dest[0];
-	char *src_p = &src[0];
-	while(i < x){
-		if(com[i] == ';'){
-			break;
-		}
-		else if(com[i] == ':' || open == 3){
-			debugCommand(comm_p, dest_p, src_p);
-			assembler(comm_p, dest_p, src_p);
-			for(y =0; y < 10; y++){
-				comm[y] = ' ';
-				dest[y] = ' ';
-				src[y] = ' ';
-			}
-			comm_c =0;
-			dest_c = 0;
-			src_c =0;
-			open =0;
-		}
-		else if(com[i] != ' '){
-			if(open == 2){
-				while(com[i] != ' ' && com[i] != ';' && com[i] != ':'){
-					src[src_c] = com[i];
-					src_c++;	 
-					i++;
-				}
-				open = 3;
-			}
-			if(open == 1){
-				while(com[i] != ' ' && com[i] != ','){
-					dest[dest_c] = com[i];
-					dest_c++;	 
-					i++;
-				}
-				open = 2;
-			}
-			if(open == 0){  
-				while(com[i] != ' '){
-					comm[comm_c] = com[i];
-					comm_c++;	 
-					i++;
-				}
-				open = 1;
-			}
-		}
-		i++;
-	}
-	if(comm_c !=0){
-		assembler(comm_p, dest_p, src_p);
-	}
-	return 0;
-}
-
-int parseCommand2(char* com, int x, int v){
-	verbosity = v;
+	verbose = v;
 	int i =0;
-	int l=0;
 	printf("LEN: %d LINE: %s", x,com);
+	int l=0;
 	for(i =x ; i>-1;i--){
 		if(com[i] == '\n'){
 			
 		}
 		else if(com[i] != ' '){
-			l=i;
+			l=i+1;
 			break;
 		}
 	}
 	if(i > 0){
-		char opcode[l+1];
+		int bytelen = 2;
+		unsigned long int opcode = 0xEDFF;
+
+		char assemblya[l+1];
 		for(; i > -1;i--){
-			opcode[i] = com[i];
+			assemblya[i] = com[i];
 		}
-		opcode[l+1] =0;
+		assemblya[l]=0;
+		printf("OPCODE %s\n", assemblya);
 		char c[] = "000";
 		c[2] = 0;
 		char* carr = &c[0];
-		int j =0;
+		
 		for(i =0; i < 256; i++){
-			if(strcmp(table1[i], opcode) == 0){
-				j =i;
-				carr = getHexFromInt(j,1, carr);
-				printf("OPCODE %s, is equal to %s\n", opcode, c);
+			printf("%d)%s compare with %s\n", i, table1[i], assemblya);
+			if(strcmp(table1[i], assemblya) == 0){
+				bytelen = 1;
+				opcode = i;
+				carr = getHexFromInt(opcode,1, carr);
+				if(verbose==1) printf("OPCODE %s, is equal to %s\n", assemblya, c);
 				break;
 			}
 		}
-		if(i == 256)printf("OPCODE %s, not found\n", opcode);
+		if(opcode == 0xEDFF){
+			for(i =64; i < 128; i++){
+				printf("%d)%s compare with %s\n", i, table2[i-64], assemblya);
+				if(strcmp(table2[i-64], assemblya) == 0){
+					bytelen = 1;
+					opcode = 0xED00;
+					opcode += i;
+					carr = getHexFromInt(opcode,1, carr);
+					if(verbose==1) printf("OPCODE %s, is equal to %s\n", assemblya, c);
+					break;
+				}
+			}
+			for(i =160; i < 192; i++){
+				printf("%d)%s compare with %s\n", i, table2[i-96], assemblya);
+				if(strcmp(table2[i-96], assemblya) == 0){
+					bytelen = 1;
+					opcode = 0xED00;
+					opcode += i;
+					carr = getHexFromInt(opcode,1, carr);
+					if(verbose==1) printf("OPCODE %s, is equal to %s\n", assemblya, c);
+					break;
+				}
+			}
+		}
+		if(opcode == 0)printf("OPCODE %s, either NOP or not found\n", assemblya);
 	}
 	else{
-		if(verbosity > 1){
-			printf("Empty line , skipping...\n");
-		}
+		if(verbose > 1)printf("Empty line , skipping...\n");
 	}
-	return 0;
-}
-
-
-int debugCommand(char *com, char *dest, char *src){
-	int y =0;
-	printf("COM:");
-	while(y < 10){
-		printf("%c", *(com+y));
- 		if(*(com+y) == ' '){
-		    break;
-		}
-		y++;
-	}
-	y=0;
-	printf(" DEST:");
-	while(y < 10){
-		if(*(dest+y) == ' '){
-		  break;
-		}
-		printf("%c", *(dest+y));
-		y++;
-	}
-	y=0;
-	printf(" SRC:");
-	while(y < 10){
-		printf("%c", *(src+y));
-		if(*(src+y) == ' '){
-		  break;
-		}
-		y++;
-	}
-	printf("\n");
-	return 0;
-}
-
-
-/*
- A = 111
- B = 000
- C = 001
- D = 010
- E = 011
- H = 100
- L = 101
- 
- I've done the endianness is a bit wierd
- 
- */
-int assembler(char *com, char *dest, char *src){
-	unsigned long int opcode = 0;
-	int y=0;
-	int longs = bytesinlong<<3;
-	int magicknumb = (longs)-2;
-	
-	//COMMANDS 
-	if((*(com) == 'L' && *(com+1) == 'D') || (*(com) == 'l' && *(com+1) == 'd')){
-		opcode+=1;
-		opcode<<= magicknumb ; //01 000 000
-		//printf("Set OPCODE to: %lu\n",opcode);
-	}
-	else if((*(com) == 'H' && *(com+1) == 'A' && *(com+2) == 'L' && *(com+3) == 'T') 
-		|| (*(com) == 'h' && *(com+1) == 'a' && *(com+2) == 'l' && *(com+3) == 't')){
-	      opcode += 0x76;
-	      opcode<<= longs-8;
-	}
-	
-	//LOCATIONS
-	char *loop;
-	loop = dest;
-	unsigned long int tmp = 0;
-	for(y = 0; y < 2; y++){
-	      if(y == 1){
-		  loop = src;
-	      }
-	      if(*(loop+1) == ' '){//SINGLE registers
-		  if(*(loop) == 'a' || *(loop) == 'A'){
-		      tmp = 7; //111
-		  }
-		  if(*(loop) == 'b' || *(loop) == 'B'){
-		      tmp = 0; //000
-		  }
-		  if(*(loop) == 'c' || *(loop) == 'C'){
-		      tmp = 1; //001
-		  }
-		  if(*(loop) == 'd' || *(loop) == 'D'){
-		      tmp = 2; //010
-		  }
-		  if(*(loop) == 'e' || *(loop) == 'E'){
-		      tmp = 3; //011
-		  }
-		  if(*(loop) == 'h' || *(loop) == 'H'){
-		      tmp = 4; //100
-		  }
-		  if(*(loop) == 'l' || *(loop) == 'L'){
-		      tmp = 5; //101
-		  }
-	      }
-	      tmp<<=(magicknumb-(3*(y+1)));
-	      opcode |= tmp;
-	}
-	
-	// ____ DEBUG ___
-	//Shift 3 for hex debug output
-	unsigned long int op = opcode;
-	unsigned long int *opptr = &op;
-	
-	if(verbosity >1){
-		char arr[longs>>2]; 
-		char *debug_ptr = &arr[0];
-		printf("OPCODE: %lu [",op);
-		debugOPCODE(opptr, (longs>>2)-1, debug_ptr);
-		for(y = 0; y < (longs>>2); y++){
-		     printf("%c", arr[y]);
-		     if((y&1) ==1){
-			  printf(" ");
-		     }
-		}
-		//Use full bit display for binary output of opcode
-		printf("] {   ");
-		char arr2[longs]; 
-		char *debug_ptr2 = &arr2[0];
-		op = opcode;
-		opptr = &op;
-		debugOPCODEbin(opptr, longs-1, debug_ptr2);
-		for(y = 0; y < longs; y++){
-		     printf("%c", arr2[y]);
-		     if((y+1)%4 ==0){
-			  printf(" ");
-		     }
-		}
-		printf("   }");
-		printf("\n");
-	}
-	opptr = &opcode;
-	assembleOPCODE(opptr);
-	
-	
 	return 0;
 }
 
@@ -321,7 +140,7 @@ int assembleOPCODE(unsigned long int *i){
 		int w = (bytesinlong*8)-((assemblerloc%bytesinlong)*8)-8;
 
 		eprom[arrpoint] |= (*i)>>w;
-		if(verbosity >1){
+		if(verbose >1){
 			printf("Wrote opcode to memory at byte numb %lu\n", assemblerloc);
 			printf("Wrote opcode to long array at index %d, this was shifted by %d and or'd \n", arrpoint, w);
 			printf("This changed %lu to %lu\n", t, eprom[arrpoint]); 
@@ -330,4 +149,128 @@ int assembleOPCODE(unsigned long int *i){
 	}
     
     return 0;
+}
+
+
+int main(int argc, char *argv[]){
+	printf("--z80 cpu and memory emulation--\n\n" );
+	char* rom = "z801.eprom";
+	FILE *file;
+	int y;
+	int switter =0;
+
+	//Parse Arguments
+	if(argc > 1){
+		for(y=0; y < argc; y++){
+			if(strcmp(argv[y], "-r") == 0){
+				if(y+1 < argc){
+					y++;
+					rom = argv[y];
+				}
+				else {
+					printf("ERROR: Please set -r value");
+				}
+			}
+			else if(strcmp(argv[y], "-a") == 0){
+				if(y+1 < argc){
+					y++;
+					file = fopen( argv[y], "r" );
+					switter=1;
+					if(file == 0){
+						printf("ERROR: Could not read file %s", argv[y]);
+						return 0;
+					}
+				}
+				else {
+					printf("ERROR: Please set -a value");
+				}
+			}
+			else if(strcmp(argv[y], "-h") == 0){
+				printHelp();
+				return 0;
+			}
+			else if(strcmp(argv[y], "-v") == 0){
+				verbose = 2;
+			}
+			else if(strcmp(argv[y], "-vv") == 0){
+				verbose = 3;
+			}
+		}
+	}
+
+	initialiseMemory(32000, rom);
+
+
+	if(verbose > 1){
+		debugRegister();
+	}
+
+	if(switter ==1){
+		char l;
+		int x =80;
+		printf("Assembly file included, reading file...\n");
+		char base[x];
+		for(y = 0; y < x ; y++){
+			base[y] =' ';
+		}
+		char com[x];
+		char* baseptr = &base[0];
+		char* comptr = &com[0];
+		memcpy(comptr, baseptr, x);
+		
+		int comcount =0;
+		int opt = 1;
+		do{
+			l=fgetc(file);
+			if(l == ';'){
+				opt = 0;
+			}
+			else if(l == '\n' || l == EOF){
+				opt = 1;
+				parseCommand(comptr, x, verbose);
+				memcpy(comptr, baseptr, x);
+				comcount=0;
+			}
+			else{
+				if(opt == 1){
+					if(comcount > x-1){
+						printf("An error, has occured, %s does not support assembly greater than %d chars long\n", argv[1],x);
+					}
+					else if(l != '\n'){
+						com[comcount] = l;
+						comcount++;
+					}
+				}
+			}
+		}
+		while(l != EOF);
+		fclose( file );
+		saveEPROM();
+	}
+	
+	loadEPROM();
+	startProcessor();
+	printf("Processor not currently emulated\n" );
+    
+	if(verbose > 1){
+		debugRegister();
+	}
+	
+	//SAVEROM
+	saveEPROM();
+	freeMemory();
+	
+	printf("Program Complete\n");
+	return 0;
+}
+
+void printHelp(){
+	printf("--zeta80 Help Menu--\n");
+	printf("BINFILE <args>\n");
+	printf("-r		Location to store ROM data\n");
+	printf("-a		Assembly file, to load in ROM (WARN: will overwrite current ROM)\n");
+	printf("-v		Verbose output on\n");
+	//printf("-vv	Very verbose output on\n");
+	//printf("-d 	Set RAM in bytes (ie -d 32000 for 32kb) ");
+	//printf("-e 		Set ROM in bytes (ie -d 32000 for 32kb) ");
 }

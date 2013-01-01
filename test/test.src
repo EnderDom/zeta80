@@ -8,9 +8,11 @@ ld d,$0A  ; NOTE $8A represents a HEX number,
          ; this loads $0A into d, $0A is the same as 10
 ld d,a    ; loads the current valueof d into a (in this case 10)
 ld d,d
+sbc hl,bc
 ld b,c
+ld a,r
+outd
 ld b,c
-ld b,c
-ld b,c
-ld b,c
+sbc hl,sp
+retn
 halt 
