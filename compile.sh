@@ -28,7 +28,7 @@ do
 	fi
 done
 
-STRING="gcc $FILES -o $BIN_DIR$EXE$END"
+STRING="gcc $FILES -o $BIN_DIR$EXE$END -lncurses"
 
 
 if [ $switch == 1 ];

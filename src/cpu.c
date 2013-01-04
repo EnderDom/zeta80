@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "cpu.h"
 #include "zetaTools.h"
+#include <ncurses.h>
 
 int initialiseCPU(){
 	int i;
@@ -10,34 +11,38 @@ int initialiseCPU(){
 }
 
 int startProcessor(){
+	debugRegister();
+	//Thank god there's a library that does this
+	initscr();
+	printw("zeta80 - A z80 emulator by EnderDom\n");
+	printw("Press any key to terminate this application: ");
+	refresh();
+	getch();
       //int counter = 20000;
       //for(;;){
 	 
 	    
      // }
-  
-  return 0;
+	endwin();
+	debugRegister();
+	return 0;
 }
 
 
 int debugRegister(){
 	printf("Register Debug:\n");
-	printf("A  CZPSNH  BC  DE  HL  IX  IY  A'  CZPSNH'  BC'  DE'  HL'  SP\n");
-	int x,y,hex;
+	printf("A  CZPSNH BC   DE   HL   IX   IY   A' CZPSNH' BC'  DE'  HL'  SP\n");
+	int x,y,z;
+	z = (sizeof(unsigned short int)*2)+2;
 	for(x =0; x < regSize; x++){
-		hex = size[x]>>3;
-		char arr[hex];
-		char *arr_ptr[hex];
-		*arr_ptr = &arr[0];
-		unsigned short *reg_ptr = &reg[x];
-		getHex(reg_ptr, hex, *arr_ptr);
-		for(y = 0; y < hex; y++){
-			printf("%c", arr[y]);
+		char* arrs = NULL;
+		arrs = getHexFromShort(reg[x], arrs);
+		for(y = 0; y < size[x]; y++){
+			printf("%c", arrs[z-size[x]]);
 		}
-		for(; y < spacing[x];y++){
+		for(y=0; y < spacing[x];y++){
 			printf(" ");
 		}
-		printf("  ");
 	}
 	printf("\n");
 	return 0;

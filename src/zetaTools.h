@@ -1,5 +1,5 @@
 #ifndef ZETATOOLS_H
 #define ZETATOOLS_H
-char* getHex(unsigned short *i, int bits, char *arr);
-char* getHexFromInt(int i, int bits, char *arr);
+char* getHexFromLong(unsigned long int i, char *arr);
+char* getHexFromShort(unsigned short int i, char *arr);
 #endif

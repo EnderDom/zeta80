@@ -1,65 +1,45 @@
 #include <stdio.h>
 
-/*
-* bits = Number of characters to write
-* *i to number to convert to hex -1
-* array to hold hex number
-*/
-char* getHex(unsigned short *i, int bits, char *arr){
-	unsigned short mask = 15;
-	unsigned short a = 0;
+char* getHexFromLong(unsigned long int i, char* arr){
+	int size = sizeof(unsigned long int);
+	unsigned long int mask = 15;
+	unsigned long int a = 0;
 	
-	while(bits >-1){
-		a = mask & (*i);
-		if(a < 10){
-			*(arr+bits) = (char)(((int)'0')+a);
-		}
-		else{
-			*(arr+bits) = (char)(((int)'a') + a-10);
-		}
-		(*i)>>=4;
-		bits--;
+	int j =0;
+	char ar[(size*2)+3];
+	ar[(size*2)+2] =0;
+	for(j = 0; j < (size*2)+2;j++){
+		ar[j] = '0';
 	}
-	return arr;
-}
-
-char* getHexFromInt(int i, int bits, char *arr){
-	int mask = 15;
-	int a = 0;
-	
-	while(bits >-1){
+	ar[1] = 'x';
+	for(j =(size*2)-1; j > -1;j--){
 		a = mask & i;
-		if(a < 10){
-			*(arr+bits) = (char)(((int)'0')+a);
-		}
-		else{
-			*(arr+bits) = (char)(((int)'a') + a-10);
-		}
+		if(a < 10) ar[j+2] = (char)(((int)'0')+a);
+		else ar[j+2] =(char)(((int)'A') + a-10);
 		i>>=4;
-		bits--;
 	}
+	arr = ar;
 	return arr;
 }
 
-/*
-* In order to debug an annoying bug:
-* From: http://stackoverflow.com/questions/4497680/c-strcmp-source-code
-*/
-int strcmp2(const char *s1, const char *s2){
-  int ret = 0;
-  int i=0;
-
-  while (!(ret = *(unsigned char *) s1 - *(unsigned char *) s2) && *s2){
-	++s1, ++s2;
-	//printf("%d\n", i);
-	i++;
-   }
-  if (ret < 0)
-
-    ret = -1;
-  else if (ret > 0)
-
-    ret = 1 ;
-
-  return ret;
+char* getHexFromShort(unsigned short int i, char* arr){
+	int size = sizeof(unsigned short int);
+	unsigned short int mask = 15;
+	unsigned short int a = 0;
+	
+	int j =0;
+	char ar[(size*2)+3];
+	ar[(size*2)+2] =0;
+	for(j = 0; j < (size*2)+2;j++){
+		ar[j] = '0';
+	}
+	ar[1] = 'x';
+	for(j =(size*2)-1; j > -1;j--){
+		a = mask & i;
+		if(a < 10) ar[j+2] = (char)(((int)'0')+a);
+		else ar[j+2] =(char)(((int)'A') + a-10);
+		i>>=4;
+	}
+	arr = ar;
+	return arr;
 }

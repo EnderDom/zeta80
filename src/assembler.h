@@ -1,6 +1,6 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
-unsigned long int assemblerloc;
+unsigned int assemblerloc;
 int verbose;
 
 static char* table1[] = {"nop", "ld bc,**", "ld (bc),a", "inc bc", "inc b", "dec b", "ld b,*", "rlca", "ex af,af'", "add hl,bc", "ld a,(bc)", "dec bc", "inc c", "dec c", "ld c,*", "rrca", 
@@ -28,9 +28,6 @@ static char* table2[] = {"in b,(c)", "out (c),b", "sbc hl,bc", "ld (**),bc", "ne
 "", "", "ldir", "cpir", "inir", "otir", "", "", "", "", "lddr", "cpdr", "indr", "otdr", "", ""};
 
 int parseCommand(char* com, int x, int v);
-int debugOPCODE(unsigned long *i, int bits, char *arr);
-int debugOPCODEbin(unsigned long *i, int bits, char *arr);
-int assembleOPCODE(unsigned long int *i);
 int main(int argc, char *argv[]);
 void printHelp();
 #endif
