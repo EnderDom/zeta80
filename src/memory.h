@@ -13,5 +13,5 @@ int freeMemory();
 int loadEPROM();
 int saveEPROM();
 void setRomfile(char* filename);
-int setBytes(unsigned long int* bytes, int numberofbytes, unsigned int byteposition);
+void setBytes(unsigned long int* bytes, int numberofbytes, unsigned int byteposition);
 #endif

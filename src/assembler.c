@@ -59,9 +59,11 @@ int parseCommand(char* com, int x, int v){
 		if(opcode == 0xEDFF) printf("ERROR: OPCODE %s, is not recognised, check syntax (eg whitespace, len...)\n", assemblya);
 		else{
 			if(verbose>1) printf("OPCODE %s, is equal to %s\n", assemblya, getHexFromLong(opcode,carr));
-			unsigned long int* opcodep = &opcode;
-			setBytes(opcodep, bytelen, assemblerloc);
-			assemblerloc += bytelen;
+			//unsigned long int* opcodep = &opcode;
+			unsigned long int ops[2] = {0x123456789ABCDEF0, 0xED5A};
+			unsigned long int* opcodep = &ops[0];
+			setBytes(opcodep, 10, assemblerloc);
+			assemblerloc += 10;
 		}
 	}
 	else{
@@ -171,6 +173,18 @@ int main(int argc, char *argv[]){
 	loadEPROM();
 	startProcessor();
 	printf("Processor not currently emulated\n" );
+	
+	char* c = NULL;
+	for(y =0 ; y < 40; y++){
+		c= getHexFromLong(getByte(y) ,c);
+		int  i =bytesinlong+2;
+		while(i-- > 0){ 
+			printf("%c", (*c));
+			c++;
+		}
+		printf("\n");
+	}
+	
     
 	if(verbose > 1){
 		debugRegister();

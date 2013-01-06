@@ -3,6 +3,9 @@
 #include "memory.h"
 #include "zetaTools.h"
 
+/**
+@param the size of disks to be created in bytes 
+*/
 int initialiseMemory(int disksize_, char* rom){
 	romfile = rom;
 	
@@ -52,80 +55,117 @@ void setRomfile(char* filename){
 	romfile = filename;
 }
 
-/*
+unsigned long int getDiskSize(){
+	return disksize;
+}
+
+/**
+* Will return value x, an unsigned long int,
+* where 0 < x < 256
+* This represents the byte at position called
+* 
+* position should be 
+* 
+* @param position integer which should represent
+* the position in memory to retrieve byte data from
+* 0 < position < disksize*2
+*/
+unsigned long int getByte(unsigned int position){
+	if(position > disksize*2){
+		printf("(zeta80)ERROR: OUT OF MEMORY, ROM size is set to %lu, attempting to assemble opcode to outside that at %d bytes", disksize, position);
+	}
+	return position > disksize ? 0xFF&(ram[position/bytesinlong]>>position%bytesinlong): 0xFF&(eprom[position/bytesinlong]>>position%bytesinlong);
+}
+
+/**
 * @param bytes : A pointer to the first/only long int to add data from
 * @param numberofbytes : the number of bytes to be written to memory, if the number 
 * is greater than the bytesinlong variable, bytes is assumed to be an array of 
 * length numberofbytes/bytesinlong +1
-* @param position : position to write as byte number, ignoring the internal storage mechanisms
+* @param position an unsigned integer representing
+* the write as byte number, ignoring the internal storage mechanisms
+* 
 */
-int setBytes(unsigned long int* bytes, int numberofbytes, unsigned int byteposition){
-	if(byteposition >= disksize){
-		printf("ERROR: OUT OF MEMORY, ROM size is set to %lu, attempting to assemble opcode to outside that at %d bytes", disksize, byteposition);
+void setBytes(unsigned long int* bytes, int numberofbytes, unsigned int byteposition){
+	if((byteposition+numberofbytes) > disksize*2){
+		printf("(zeta80)ERROR: OUT OF MEMORY, ROM size is set to %lu, attempting to assemble opcode to outside that at %d bytes", disksize, byteposition);
 	}
 	
-	int position = byteposition/bytesinlong;
+	//Position within the internal data structure
+	unsigned int position = byteposition/bytesinlong;
+	//Offset
 	int offset = byteposition%bytesinlong;
 	printf("%d %d \n", position, offset);
+	
+	//Masks
 	unsigned long int leftmask = -1;
 	unsigned long int rightmask = -1;
 	
-	int len = bytesinlong*8;
+	//Number of _bits_ in a long type
+	int len = bytesinlong<<3;
+	//Offset in bits
+	offset<<=3;
 
-	offset*=8;
-	/*
+	//Loop Iteration values
 	int i =0;
 	int inter = (numberofbytes/bytesinlong)+1;
 	
-	
 	for(i =0; i < inter; i++){
+		//Next integer if exist
+		if(i != 0)bytes++;
+		//Recalculate width
+		int width = i < inter-1 ? len : (numberofbytes - (i*bytesinlong))<<3;
+		/*
+		* Set all bits to 1
+		*/
 		leftmask = -1;
-		rightmask =-1;
-		int width = (numberofbytes-(i*8))*8;
-		if(width+offset =< len){
+		rightmask = -1;
+
+		/*
+		* ternary is due to annoying thing were
+		* if you shift by equal or more than the size
+		* of the data type it doesn't play ball.
+		* 
+		* There's likely an alternative way of doing
+		* this but I can't think of it right now
+		
+		*/ 		
+		leftmask = (len-offset) >= len ? 0: leftmask>>(len-offset);//Left
+		rightmask = (offset+width) >= len ? 0 : rightmask <<(offset+width);//Right
+		leftmask |= rightmask;//Merge
+		
+		if((position+i) < disksize){
+			eprom[position+i] &= leftmask;//Clean
+			eprom[position+i] |= (((*bytes)<<offset)&~leftmask);//Paste (&clean data)
 		}
 		else{
-			->leftside
-			if((len-offset) >=64) leftmask = 0;
-			else leftmask >>=len-offset;
-		
-			if((offset+numbs) >= len) rightmask = 0;
-			else rightmask <<= offset+numbs;
-			
+			ram[position+i] &= leftmask;//Clean
+			ram[position+i] |= (((*bytes)<<offset)&~leftmask);//Paste (&clean data)
+		}
+
+		/*
+		* Need to add the rest of data which doesn't fit
+		* into previous index due to offset
+		*/		
+		if(width+offset > len){			
+			/* No leftmask actually needed
+			* as data will always be stored at first 
+			* byte position
+			*/
+			//Right
+			rightmask = -1;
+			rightmask <<= offset-width;
+			//Cross fingers bother numberofbytes and disksize are correct
+			if((position+i) < disksize){
+				eprom[position+i+1] &=rightmask;//Clean
+				eprom[position+i+1] |=((*bytes)>>((len-offset)&~rightmask));//Paste (&clean data)
+			}
+			else{
+				ram[position+i+1-disksize] &=rightmask;//Clean
+				ram[position+i+1-disksize] |=((*bytes)>>((len-offset)&~rightmask));//Paste (&clean data)
+			}
 		}
 	}
-	*/
-	
-	
-	int numbs = numberofbytes*8;
-	char* c=NULL;
-	if(numbs + offset < len){
-		//Create mask to wipe current datas
-		
-		//Check to bypass the wierdness of shifting more than sizeof long in bits
-		if((len-offset) >=64) leftmask = 0;
-		else leftmask >>=len-offset;
-		
-		if((offset+numbs) >= len) rightmask = 0;
-		else rightmask <<= offset+numbs;
-		
-		leftmask |= rightmask;
-		/*
-		* Write data
-		*/
-		printf("EROM: %s\n", getHexFromLong(eprom[position], c));
-		eprom[position] &= leftmask;
-		printf("MASK: %s\n", getHexFromLong(leftmask, c));
-		printf("EROM: %s\n", getHexFromLong(eprom[position], c));
-		eprom[position] |= (((*bytes)<<offset)&~leftmask);
-		printf("SCOR: %s\n", getHexFromLong((*bytes), c));
-		printf("SCOR: %s\n", getHexFromLong((((*bytes)<<offset)&~leftmask), c));
-		printf("EROM: %s\n", getHexFromLong(eprom[position], c));
-	}
-	else{
-		
-	}
-	return 0;
+	return;
 }
-
 
