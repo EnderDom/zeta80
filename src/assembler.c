@@ -5,22 +5,31 @@
 #include "cpu.h"
 #include "zetaTools.h"
 
+//Recieves a assembly command, assumes
+//command has no whitespace left of any coms
+//whitespace right of coms is ignored
+//lines with no coms are ignored
+//Takes coms compares to the table
+//and adds the command to memory starting
+//at byte 0 in the eprom
 int parseCommand(char* com, int x, int v){
 	verbose = v;
 	int i =0;
 	printf("LEN: %d LINE: %s", x,com);
 	int l=0;
+	//Loops through command from end backwards
 	for(i =x ; i>-1;i--){
-		if(com[i] == '\n'){
-			
-		}
+		//If newline, which should be when i==x, do nothing
+		if(com[i] == '\n');
+		//Get the position of the first none whitespace character
 		else if(com[i] != ' '){
 			l=i+1;
 			break;
 		}
 	}
-	if(i > 0){
+	if(i > 0){//Acts only if none-whitespace chars
 		int bytelen = 2;
+		//Default char is
 		unsigned long int opcode = 0xEDFF;
 
 		char assemblya[l+1];
@@ -32,7 +41,6 @@ int parseCommand(char* com, int x, int v){
 		char* carr = NULL;
 		
 		for(i =0; i < 256; i++){
-			//printf("%d)%s compare with %s\n", i, table1[i], assemblya);
 			if(strcmp(table1[i], assemblya) == 0){
 				bytelen = 1;
 				opcode = i;
@@ -59,11 +67,9 @@ int parseCommand(char* com, int x, int v){
 		if(opcode == 0xEDFF) printf("ERROR: OPCODE %s, is not recognised, check syntax (eg whitespace, len...)\n", assemblya);
 		else{
 			if(verbose>1) printf("OPCODE %s, is equal to %s\n", assemblya, getHexFromLong(opcode,carr));
-			//unsigned long int* opcodep = &opcode;
-			unsigned long int ops[2] = {0x123456789ABCDEF0, 0xED5A};
-			unsigned long int* opcodep = &ops[0];
-			setBytes(opcodep, 10, assemblerloc);
-			assemblerloc += 10;
+			unsigned long int* opcodep = &opcode;
+			setBytes(opcodep, bytelen, assemblerloc);
+			assemblerloc += bytelen;
 		}
 	}
 	else{
@@ -121,7 +127,7 @@ int main(int argc, char *argv[]){
 	}
 
 	initialiseMemory(32000, rom);
-
+	isLittleEndian();
 
 	if(verbose > 1){
 		debugRegister();

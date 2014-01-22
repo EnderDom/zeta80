@@ -90,16 +90,18 @@ void setBytes(unsigned long int* bytes, int numberofbytes, unsigned int byteposi
 	if((byteposition+numberofbytes) > disksize*2){
 		printf("(zeta80)ERROR: OUT OF MEMORY, ROM size is set to %lu, attempting to assemble opcode to outside that at %d bytes", disksize, byteposition);
 	}
-	
+
 	//Position within the internal data structure
 	unsigned int position = byteposition/bytesinlong;
 	//Offset
 	int offset = byteposition%bytesinlong;
-	printf("%d %d \n", position, offset);
+	printf("Memory Position: %d  Offset: %d \n", position, offset);
 	
 	//Masks
 	unsigned long int leftmask = -1;
 	unsigned long int rightmask = -1;
+	
+	unsigned long bytevalue;
 	
 	//Number of _bits_ in a long type
 	int len = bytesinlong<<3;
@@ -113,8 +115,15 @@ void setBytes(unsigned long int* bytes, int numberofbytes, unsigned int byteposi
 	for(i =0; i < inter; i++){
 		//Next integer if exist
 		if(i != 0)bytes++;
+		bytevalue = (*bytes);
 		//Recalculate width
 		int width = i < inter-1 ? len : (numberofbytes - (i*bytesinlong))<<3;
+		
+		if(lilEnd==1){
+			//TODO invert the byte order for littleEndian
+			//storage so the byte position 0 is equivalent to the
+			//least significant value in long ie bigEndian storage
+		}
 		/*
 		* Set all bits to 1
 		*/
@@ -128,7 +137,6 @@ void setBytes(unsigned long int* bytes, int numberofbytes, unsigned int byteposi
 		* 
 		* There's likely an alternative way of doing
 		* this but I can't think of it right now
-		
 		*/ 		
 		leftmask = (len-offset) >= len ? 0: leftmask>>(len-offset);//Left
 		rightmask = (offset+width) >= len ? 0 : rightmask <<(offset+width);//Right
@@ -136,11 +144,11 @@ void setBytes(unsigned long int* bytes, int numberofbytes, unsigned int byteposi
 		
 		if((position+i) < disksize){
 			eprom[position+i] &= leftmask;//Clean
-			eprom[position+i] |= (((*bytes)<<offset)&~leftmask);//Paste (&clean data)
+			eprom[position+i] |= ((bytevalue<<offset)&~leftmask);//Paste (&clean data)
 		}
 		else{
-			ram[position+i] &= leftmask;//Clean
-			ram[position+i] |= (((*bytes)<<offset)&~leftmask);//Paste (&clean data)
+			ram[position+i-disksize] &= leftmask;//Clean
+			ram[position+i-disksize] |= ((bytevalue<<offset)&~leftmask);//Paste (&clean data)
 		}
 
 		/*
@@ -158,14 +166,21 @@ void setBytes(unsigned long int* bytes, int numberofbytes, unsigned int byteposi
 			//Cross fingers bother numberofbytes and disksize are correct
 			if((position+i) < disksize){
 				eprom[position+i+1] &=rightmask;//Clean
-				eprom[position+i+1] |=((*bytes)>>((len-offset)&~rightmask));//Paste (&clean data)
+				eprom[position+i+1] |=(bytevalue>>((len-offset)&~rightmask));//Paste (&clean data)
 			}
 			else{
 				ram[position+i+1-disksize] &=rightmask;//Clean
-				ram[position+i+1-disksize] |=((*bytes)>>((len-offset)&~rightmask));//Paste (&clean data)
+				ram[position+i+1-disksize] |=(bytevalue>>((len-offset)&~rightmask));//Paste (&clean data)
 			}
 		}
 	}
 	return;
+}
+
+//Returns 1 if little, 0 if big
+int isLittleEndian() {
+	int i =1;
+	char *p = (char *)&i;
+	return (lilEnd=p[0]);
 }
 

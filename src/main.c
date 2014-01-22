@@ -52,6 +52,7 @@ int main(int argc, char *argv[]){
 	}
 
 	initialiseMemory(32000, rom);
+	isLittleEndian();
 
 	if(verbose > 1){
 		debugRegister();
